@@ -1,0 +1,979 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smart Classroom & Timetable Scheduler</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f4f7f9;
+            color: #333;
+        }
+    </style>
+</head>
+<body class="p-4 sm:p-8">
+    <div class="max-w-7xl mx-auto bg-white rounded-3xl shadow-2xl p-6 sm:p-10 mb-8">
+        <header class="text-center mb-10">
+            <h1 class="text-3xl sm:text-5xl font-bold text-gray-800 mb-2">Smart Classroom & Timetable Scheduler</h1>
+            <p class="text-sm sm:text-lg text-gray-500">Generate optimized timetables by defining your resources and constraints.</p>
+        </header>
+
+        <!-- Message Box -->
+        <div id="messageBox" class="fixed top-4 left-1/2 -translate-x-1/2 px-6 py-3 bg-blue-500 text-white text-sm rounded-full shadow-lg transition-all duration-300 ease-in-out z-50 transform scale-0">
+            Generating Timetable...
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <!-- Input Panel -->
+            <div class="bg-gray-50 p-6 rounded-2xl border border-gray-200">
+                <h2 class="text-2xl font-semibold text-gray-700 mb-6">Input Parameters</h2>
+                <div class="space-y-6">
+                    <div>
+                        <label for="numClassrooms" class="block text-sm font-medium text-gray-700 mb-1">Number of Classrooms</label>
+                        <input type="number" id="numClassrooms" value="3" min="1" class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-500 focus:ring-opacity-50">
+                    </div>
+                    <div>
+                        <label for="numBatches" class="block text-sm font-medium text-gray-700 mb-1">Number of Batches of Students</label>
+                        <input type="number" id="numBatches" value="2" min="1" class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-500 focus:ring-opacity-50">
+                    </div>
+                    <div>
+                        <label for="maxClassesPerDay" class="block text-sm font-medium text-gray-700 mb-1">Maximum Classes Per Day</label>
+                        <input type="number" id="maxClassesPerDay" value="6" min="1" class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-500 focus:ring-opacity-50">
+                    </div>
+
+                    <div id="subjectsContainer" class="space-y-4">
+                        <div class="flex items-center space-x-2">
+                            <label class="block text-sm font-medium text-gray-700 flex-grow">Subject Name</label>
+                            <label class="block text-sm font-medium text-gray-700 flex-grow">Classes / Week</label>
+                            <label class="block text-sm font-medium text-gray-700 flex-grow">Faculty Name</label>
+                        </div>
+                        <div class="flex items-center space-x-2 subject-row">
+                            <input type="text" value="Math" placeholder="Subject Name" class="subject-name flex-grow rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-500 focus:ring-opacity-50">
+                            <input type="number" value="5" min="1" class="subject-classes flex-grow rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-500 focus:ring-opacity-50">
+                            <input type="text" value="Dr. Smith" placeholder="Faculty Name" class="subject-faculty flex-grow rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-500 focus:ring-opacity-50">
+                        </div>
+                        <div class="flex items-center space-x-2 subject-row">
+                            <input type="text" value="Physics" placeholder="Subject Name" class="subject-name flex-grow rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-500 focus:ring-opacity-50">
+                            <input type="number" value="4" min="1" class="subject-classes flex-grow rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-500 focus:ring-opacity-50">
+                            <input type="text" value="Dr. Johnson" placeholder="Faculty Name" class="subject-faculty flex-grow rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-500 focus:ring-opacity-50">
+                        </div>
+                    </div>
+                    <button id="addSubjectBtn" class="w-full py-2 px-4 bg-gray-200 text-gray-700 rounded-lg font-medium hover:bg-gray-300 transition-colors">Add Subject</button>
+                    
+                    <div id="specialClassesContainer" class="space-y-4 pt-4">
+                        <h3 class="text-lg font-semibold text-gray-700 mb-2">Special/Fixed Classes</h3>
+                        <div class="flex items-center space-x-2">
+                            <label class="block text-sm font-medium text-gray-700 flex-grow">Batch</label>
+                            <label class="block text-sm font-medium text-gray-700 flex-grow">Subject</label>
+                            <label class="block text-sm font-medium text-gray-700 flex-grow">Day</label>
+                            <label class="block text-sm font-medium text-gray-700 flex-grow">Slot</label>
+                        </div>
+                        <div class="flex items-center space-x-2 special-class-row">
+                            <input type="number" value="1" min="1" class="special-class-batch w-1/4 rounded-md border-gray-300 shadow-sm">
+                            <input type="text" value="Seminar" placeholder="Subject Name" class="special-class-subject w-1/4 rounded-md border-gray-300 shadow-sm">
+                            <select class="special-class-day w-1/4 rounded-md border-gray-300 shadow-sm">
+                                <option value="Monday">Mon</option>
+                                <option value="Tuesday">Tue</option>
+                                <option value="Wednesday">Wed</option>
+                                <option value="Thursday">Thu</option>
+                                <option value="Friday">Fri</option>
+                            </select>
+                            <input type="number" value="3" min="1" class="special-class-slot w-1/4 rounded-md border-gray-300 shadow-sm">
+                        </div>
+                    </div>
+                    <button id="addSpecialClassBtn" class="w-full py-2 px-4 bg-gray-200 text-gray-700 rounded-lg font-medium hover:bg-gray-300 transition-colors">Add Special Class</button>
+                </div>
+                <button id="generateBtn" class="w-full py-3 mt-8 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition-colors shadow-lg">Generate Timetable</button>
+            </div>
+
+            <!-- Timetable Display -->
+            <div id="timetableDisplay" class="bg-gray-50 p-6 rounded-2xl border border-gray-200 hidden">
+                <h2 class="text-2xl font-semibold text-gray-700 mb-6">Generated Timetables</h2>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const numClassroomsInput = document.getElementById('numClassrooms');
+            const numBatchesInput = document.getElementById('numBatches');
+            const maxClassesPerDayInput = document.getElementById('maxClassesPerDay');
+            const subjectsContainer = document.getElementById('subjectsContainer');
+            const addSubjectBtn = document.getElementById('addSubjectBtn');
+            const specialClassesContainer = document.getElementById('specialClassesContainer');
+            const addSpecialClassBtn = document.getElementById('addSpecialClassBtn');
+            const generateBtn = document.getElementById('generateBtn');
+            const timetableDisplay = document.getElementById('timetableDisplay');
+            const messageBox = document.getElementById('messageBox');
+
+            const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
+
+            // Function to show a message box
+            const showMessage = (text, type = 'info') => {
+                messageBox.textContent = text;
+                let bgColor = 'bg-blue-500';
+                if (type === 'error') bgColor = 'bg-red-500';
+                else if (type === 'success') bgColor = 'bg-green-500';
+                
+                messageBox.className = `fixed top-4 left-1/2 -translate-x-1/2 px-6 py-3 text-white text-sm rounded-full shadow-lg transition-all duration-300 ease-in-out z-50 transform scale-100 ${bgColor}`;
+                
+                setTimeout(() => {
+                    messageBox.className = `fixed top-4 left-1/2 -translate-x-1/2 px-6 py-3 text-white text-sm rounded-full shadow-lg transition-all duration-300 ease-in-out z-50 transform scale-0`;
+                }, 3000);
+            };
+
+            // Add a new subject row
+            addSubjectBtn.addEventListener('click', () => {
+                const newRow = document.createElement('div');
+                newRow.className = "flex items-center space-x-2 subject-row";
+                newRow.innerHTML = `
+                    <input type="text" placeholder="Subject Name" class="subject-name flex-grow rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-500 focus:ring-opacity-50">
+                    <input type="number" min="1" value="3" class="subject-classes flex-grow rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-500 focus:ring-opacity-50">
+                    <input type="text" placeholder="Faculty Name" class="subject-faculty flex-grow rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-500 focus:ring-opacity-50">
+                    <button class="remove-btn bg-red-500 text-white rounded-full h-6 w-6 flex items-center justify-center text-xs p-1">X</button>
+                `;
+                subjectsContainer.appendChild(newRow);
+                newRow.querySelector('.remove-btn').addEventListener('click', () => newRow.remove());
+            });
+
+            // Add a new special class row
+            addSpecialClassBtn.addEventListener('click', () => {
+                const newRow = document.createElement('div');
+                newRow.className = "flex items-center space-x-2 special-class-row";
+                newRow.innerHTML = `
+                    <input type="number" value="1" min="1" class="special-class-batch w-1/4 rounded-md border-gray-300 shadow-sm">
+                    <input type="text" placeholder="Subject Name" class="special-class-subject w-1/4 rounded-md border-gray-300 shadow-sm">
+                    <select class="special-class-day w-1/4 rounded-md border-gray-300 shadow-sm">
+                        <option value="Monday">Mon</option>
+                        <option value="Tuesday">Tue</option>
+                        <option value="Wednesday">Wed</option>
+                        <option value="Thursday">Thu</option>
+                        <option value="Friday">Fri</option>
+                    </select>
+                    <input type="number" value="1" min="1" class="special-class-slot w-1/4 rounded-md border-gray-300 shadow-sm">
+                    <button class="remove-btn bg-red-500 text-white rounded-full h-6 w-6 flex items-center justify-center text-xs p-1">X</button>
+                `;
+                specialClassesContainer.appendChild(newRow);
+                newRow.querySelector('.remove-btn').addEventListener('click', () => newRow.remove());
+            });
+
+            // Timetable generation logic
+            generateBtn.addEventListener('click', () => {
+                showMessage("Generating Timetable...", "info");
+                
+                // Get all inputs
+                const numClassrooms = parseInt(numClassroomsInput.value);
+                const numBatches = parseInt(numBatchesInput.value);
+                const maxClassesPerDay = parseInt(maxClassesPerDayInput.value);
+                const subjects = Array.from(subjectsContainer.querySelectorAll('.subject-row')).map(row => ({
+                    name: row.querySelector('.subject-name').value.trim(),
+                    classesPerWeek: parseInt(row.querySelector('.subject-classes').value),
+                    faculty: row.querySelector('.subject-faculty').value.trim()
+                })).filter(s => s.name && !isNaN(s.classesPerWeek) && s.faculty);
+
+                const specialClasses = Array.from(specialClassesContainer.querySelectorAll('.special-class-row')).map(row => ({
+                    batch: parseInt(row.querySelector('.special-class-batch').value),
+                    subject: row.querySelector('.special-class-subject').value.trim(),
+                    day: row.querySelector('.special-class-day').value,
+                    slot: parseInt(row.querySelector('.special-class-slot').value)
+                })).filter(s => s.batch && s.subject && s.day && s.slot);
+                
+                // Validate inputs
+                if (subjects.length === 0 || numClassrooms < 1 || numBatches < 1 || maxClassesPerDay < 1) {
+                    showMessage("Please enter valid data for all parameters.", "error");
+                    return;
+                }
+
+                const timetable = {};
+                const facultyAvailability = {};
+                const classroomAvailability = {};
+
+                // Initialize availability trackers
+                for (let i = 1; i <= numBatches; i++) {
+                    timetable[i] = {};
+                    for (const day of days) {
+                        timetable[i][day] = new Array(maxClassesPerDay).fill(null);
+                    }
+                }
+                for (const subject of subjects) {
+                    facultyAvailability[subject.faculty] = facultyAvailability[subject.faculty] || {};
+                    for (const day of days) {
+                        facultyAvailability[subject.faculty][day] = new Array(maxClassesPerDay).fill(true);
+                    }
+                }
+                for (let i = 1; i <= numClassrooms; i++) {
+                    classroomAvailability[i] = {};
+                    for (const day of days) {
+                        classroomAvailability[i][day] = new Array(maxClassesPerDay).fill(true);
+                    }
+                }
+
+                // Place fixed special classes first
+                for (const special of specialClasses) {
+                    const batchKey = special.batch;
+                    const day = special.day;
+                    const slotIndex = special.slot - 1;
+                    if (timetable[batchKey] && timetable[batchKey][day] && timetable[batchKey][day][slotIndex] === null) {
+                        timetable[batchKey][day][slotIndex] = {
+                            subject: special.subject,
+                            faculty: 'Special',
+                            classroom: 'Special'
+                        };
+                    } else {
+                        showMessage(`Warning: Could not place fixed class for Batch ${batchKey} on ${day} at slot ${special.slot}. Slot is already occupied.`, "error");
+                    }
+                }
+
+                // Simplified greedy algorithm to fill the rest
+                for (let i = 1; i <= numBatches; i++) {
+                    const assignedClasses = {};
+                    subjects.forEach(s => assignedClasses[s.name] = 0);
+                    
+                    const availableSubjects = subjects.slice();
+
+                    for (const day of days) {
+                        for (let slotIndex = 0; slotIndex < maxClassesPerDay; slotIndex++) {
+                            if (timetable[i][day][slotIndex] !== null) continue; // Slot is already taken by a special class
+
+                            let assigned = false;
+                            // Find an available subject, faculty, and classroom
+                            for (let sIdx = 0; sIdx < availableSubjects.length; sIdx++) {
+                                const subject = availableSubjects[sIdx];
+                                if (assignedClasses[subject.name] >= subject.classesPerWeek) continue;
+
+                                const faculty = subject.faculty;
+                                if (!facultyAvailability[faculty] || !facultyAvailability[faculty][day][slotIndex]) continue;
+                                
+                                let foundClassroom = null;
+                                for (let c = 1; c <= numClassrooms; c++) {
+                                    if (classroomAvailability[c] && classroomAvailability[c][day][slotIndex]) {
+                                        foundClassroom = c;
+                                        break;
+                                    }
+                                }
+
+                                if (foundClassroom) {
+                                    timetable[i][day][slotIndex] = {
+                                        subject: subject.name,
+                                        faculty: faculty,
+                                        classroom: foundClassroom
+                                    };
+                                    facultyAvailability[faculty][day][slotIndex] = false;
+                                    classroomAvailability[foundClassroom][day][slotIndex] = false;
+                                    assignedClasses[subject.name]++;
+                                    assigned = true;
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                }
+
+                // Render the timetable
+                timetableDisplay.innerHTML = '';
+                timetableDisplay.classList.remove('hidden');
+
+                for (let i = 1; i <= numBatches; i++) {
+                    const batchDiv = document.createElement('div');
+                    batchDiv.className = "mb-8";
+                    batchDiv.innerHTML = `
+                        <h3 class="text-xl font-semibold mb-4 text-gray-700">Batch ${i}</h3>
+                        <div class="overflow-x-auto rounded-lg shadow-lg border border-gray-200">
+                            <table class="min-w-full divide-y divide-gray-200">
+                                <thead class="bg-gray-100">
+                                    <tr>
+                                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider rounded-tl-lg">Time Slot</th>
+                                        ${days.map(day => `<th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">${day}</th>`).join('')}
+                                    </tr>
+                                </thead>
+                                <tbody class="bg-white divide-y divide-gray-200">
+                                    ${Array.from({ length: maxClassesPerDay }, (_, slotIndex) => `
+                                        <tr>
+                                            <td class="px-4 py-3 whitespace-nowrap text-sm font-medium text-gray-900">${slotIndex + 1}</td>
+                                            ${days.map(day => {
+                                                const classInfo = timetable[i][day][slotIndex];
+                                                if (classInfo) {
+                                                    return `
+                                                        <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-500">
+                                                            <div class="font-bold text-gray-800">${classInfo.subject}</div>
+                                                            <div class="text-xs text-gray-500">
+                                                                <span class="font-medium">${classInfo.faculty}</span>, Room ${classInfo.classroom}
+                                                            </div>
+                                                        </td>
+                                                    `;
+                                                } else {
+                                                    return `<td class="px-4 py-3 whitespace-nowrap text-sm text-gray-400 italic">Free</td>`;
+                                                }
+                                            }).join('')}
+                                        </tr>
+                                    `).join('')}
+                                </tbody>
+                            </table>
+                        </div>
+                    `;
+                    timetableDisplay.appendChild(batchDiv);
+                }
+
+                showMessage("Timetable generated successfully!", "success");
+            });
+        });
+    </script>
+</body>
+</html><!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smart Classroom & Timetable Scheduler</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f4f7f9;
+            color: #333;
+        }
+    </style>
+</head>
+<body class="p-4 sm:p-8">
+    <div class="max-w-7xl mx-auto bg-white rounded-3xl shadow-2xl p-6 sm:p-10 mb-8">
+        <header class="text-center mb-10">
+            <h1 class="text-3xl sm:text-5xl font-bold text-gray-800 mb-2">Smart Classroom & Timetable Scheduler</h1>
+            <p class="text-sm sm:text-lg text-gray-500">Generate optimized timetables by defining your resources and constraints.</p>
+        </header>
+
+        <!-- Message Box -->
+        <div id="messageBox" class="fixed top-4 left-1/2 -translate-x-1/2 px-6 py-3 bg-blue-500 text-white text-sm rounded-full shadow-lg transition-all duration-300 ease-in-out z-50 transform scale-0">
+            Generating Timetable...
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <!-- Input Panel -->
+            <div class="bg-gray-50 p-6 rounded-2xl border border-gray-200">
+                <h2 class="text-2xl font-semibold text-gray-700 mb-6">Input Parameters</h2>
+                <div class="space-y-6">
+                    <div>
+                        <label for="numClassrooms" class="block text-sm font-medium text-gray-700 mb-1">Number of Classrooms</label>
+                        <input type="number" id="numClassrooms" value="3" min="1" class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-500 focus:ring-opacity-50">
+                    </div>
+                    <div>
+                        <label for="numBatches" class="block text-sm font-medium text-gray-700 mb-1">Number of Batches of Students</label>
+                        <input type="number" id="numBatches" value="2" min="1" class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-500 focus:ring-opacity-50">
+                    </div>
+                    <div>
+                        <label for="maxClassesPerDay" class="block text-sm font-medium text-gray-700 mb-1">Maximum Classes Per Day</label>
+                        <input type="number" id="maxClassesPerDay" value="6" min="1" class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-500 focus:ring-opacity-50">
+                    </div>
+
+                    <div id="subjectsContainer" class="space-y-4">
+                        <div class="flex items-center space-x-2">
+                            <label class="block text-sm font-medium text-gray-700 flex-grow">Subject Name</label>
+                            <label class="block text-sm font-medium text-gray-700 flex-grow">Classes / Week</label>
+                            <label class="block text-sm font-medium text-gray-700 flex-grow">Faculty Name</label>
+                        </div>
+                        <div class="flex items-center space-x-2 subject-row">
+                            <input type="text" value="Math" placeholder="Subject Name" class="subject-name flex-grow rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-500 focus:ring-opacity-50">
+                            <input type="number" value="5" min="1" class="subject-classes flex-grow rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-500 focus:ring-opacity-50">
+                            <input type="text" value="Dr. Smith" placeholder="Faculty Name" class="subject-faculty flex-grow rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-500 focus:ring-opacity-50">
+                        </div>
+                        <div class="flex items-center space-x-2 subject-row">
+                            <input type="text" value="Physics" placeholder="Subject Name" class="subject-name flex-grow rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-500 focus:ring-opacity-50">
+                            <input type="number" value="4" min="1" class="subject-classes flex-grow rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-500 focus:ring-opacity-50">
+                            <input type="text" value="Dr. Johnson" placeholder="Faculty Name" class="subject-faculty flex-grow rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-500 focus:ring-opacity-50">
+                        </div>
+                    </div>
+                    <button id="addSubjectBtn" class="w-full py-2 px-4 bg-gray-200 text-gray-700 rounded-lg font-medium hover:bg-gray-300 transition-colors">Add Subject</button>
+                    
+                    <div id="specialClassesContainer" class="space-y-4 pt-4">
+                        <h3 class="text-lg font-semibold text-gray-700 mb-2">Special/Fixed Classes</h3>
+                        <div class="flex items-center space-x-2">
+                            <label class="block text-sm font-medium text-gray-700 flex-grow">Batch</label>
+                            <label class="block text-sm font-medium text-gray-700 flex-grow">Subject</label>
+                            <label class="block text-sm font-medium text-gray-700 flex-grow">Day</label>
+                            <label class="block text-sm font-medium text-gray-700 flex-grow">Slot</label>
+                        </div>
+                        <div class="flex items-center space-x-2 special-class-row">
+                            <input type="number" value="1" min="1" class="special-class-batch w-1/4 rounded-md border-gray-300 shadow-sm">
+                            <input type="text" value="Seminar" placeholder="Subject Name" class="special-class-subject w-1/4 rounded-md border-gray-300 shadow-sm">
+                            <select class="special-class-day w-1/4 rounded-md border-gray-300 shadow-sm">
+                                <option value="Monday">Mon</option>
+                                <option value="Tuesday">Tue</option>
+                                <option value="Wednesday">Wed</option>
+                                <option value="Thursday">Thu</option>
+                                <option value="Friday">Fri</option>
+                            </select>
+                            <input type="number" value="3" min="1" class="special-class-slot w-1/4 rounded-md border-gray-300 shadow-sm">
+                        </div>
+                    </div>
+                    <button id="addSpecialClassBtn" class="w-full py-2 px-4 bg-gray-200 text-gray-700 rounded-lg font-medium hover:bg-gray-300 transition-colors">Add Special Class</button>
+                </div>
+                <button id="generateBtn" class="w-full py-3 mt-8 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition-colors shadow-lg">Generate Timetable</button>
+            </div>
+
+            <!-- Timetable Display -->
+            <div id="timetableDisplay" class="bg-gray-50 p-6 rounded-2xl border border-gray-200 hidden">
+                <h2 class="text-2xl font-semibold text-gray-700 mb-6">Generated Timetables</h2>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const numClassroomsInput = document.getElementById('numClassrooms');
+            const numBatchesInput = document.getElementById('numBatches');
+            const maxClassesPerDayInput = document.getElementById('maxClassesPerDay');
+            const subjectsContainer = document.getElementById('subjectsContainer');
+            const addSubjectBtn = document.getElementById('addSubjectBtn');
+            const specialClassesContainer = document.getElementById('specialClassesContainer');
+            const addSpecialClassBtn = document.getElementById('addSpecialClassBtn');
+            const generateBtn = document.getElementById('generateBtn');
+            const timetableDisplay = document.getElementById('timetableDisplay');
+            const messageBox = document.getElementById('messageBox');
+
+            const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
+
+            // Function to show a message box
+            const showMessage = (text, type = 'info') => {
+                messageBox.textContent = text;
+                let bgColor = 'bg-blue-500';
+                if (type === 'error') bgColor = 'bg-red-500';
+                else if (type === 'success') bgColor = 'bg-green-500';
+                
+                messageBox.className = `fixed top-4 left-1/2 -translate-x-1/2 px-6 py-3 text-white text-sm rounded-full shadow-lg transition-all duration-300 ease-in-out z-50 transform scale-100 ${bgColor}`;
+                
+                setTimeout(() => {
+                    messageBox.className = `fixed top-4 left-1/2 -translate-x-1/2 px-6 py-3 text-white text-sm rounded-full shadow-lg transition-all duration-300 ease-in-out z-50 transform scale-0`;
+                }, 3000);
+            };
+
+            // Add a new subject row
+            addSubjectBtn.addEventListener('click', () => {
+                const newRow = document.createElement('div');
+                newRow.className = "flex items-center space-x-2 subject-row";
+                newRow.innerHTML = `
+                    <input type="text" placeholder="Subject Name" class="subject-name flex-grow rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-500 focus:ring-opacity-50">
+                    <input type="number" min="1" value="3" class="subject-classes flex-grow rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-500 focus:ring-opacity-50">
+                    <input type="text" placeholder="Faculty Name" class="subject-faculty flex-grow rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-500 focus:ring-opacity-50">
+                    <button class="remove-btn bg-red-500 text-white rounded-full h-6 w-6 flex items-center justify-center text-xs p-1">X</button>
+                `;
+                subjectsContainer.appendChild(newRow);
+                newRow.querySelector('.remove-btn').addEventListener('click', () => newRow.remove());
+            });
+
+            // Add a new special class row
+            addSpecialClassBtn.addEventListener('click', () => {
+                const newRow = document.createElement('div');
+                newRow.className = "flex items-center space-x-2 special-class-row";
+                newRow.innerHTML = `
+                    <input type="number" value="1" min="1" class="special-class-batch w-1/4 rounded-md border-gray-300 shadow-sm">
+                    <input type="text" placeholder="Subject Name" class="special-class-subject w-1/4 rounded-md border-gray-300 shadow-sm">
+                    <select class="special-class-day w-1/4 rounded-md border-gray-300 shadow-sm">
+                        <option value="Monday">Mon</option>
+                        <option value="Tuesday">Tue</option>
+                        <option value="Wednesday">Wed</option>
+                        <option value="Thursday">Thu</option>
+                        <option value="Friday">Fri</option>
+                    </select>
+                    <input type="number" value="1" min="1" class="special-class-slot w-1/4 rounded-md border-gray-300 shadow-sm">
+                    <button class="remove-btn bg-red-500 text-white rounded-full h-6 w-6 flex items-center justify-center text-xs p-1">X</button>
+                `;
+                specialClassesContainer.appendChild(newRow);
+                newRow.querySelector('.remove-btn').addEventListener('click', () => newRow.remove());
+            });
+
+            // Timetable generation logic
+            generateBtn.addEventListener('click', () => {
+                showMessage("Generating Timetable...", "info");
+                
+                // Get all inputs
+                const numClassrooms = parseInt(numClassroomsInput.value);
+                const numBatches = parseInt(numBatchesInput.value);
+                const maxClassesPerDay = parseInt(maxClassesPerDayInput.value);
+                const subjects = Array.from(subjectsContainer.querySelectorAll('.subject-row')).map(row => ({
+                    name: row.querySelector('.subject-name').value.trim(),
+                    classesPerWeek: parseInt(row.querySelector('.subject-classes').value),
+                    faculty: row.querySelector('.subject-faculty').value.trim()
+                })).filter(s => s.name && !isNaN(s.classesPerWeek) && s.faculty);
+
+                const specialClasses = Array.from(specialClassesContainer.querySelectorAll('.special-class-row')).map(row => ({
+                    batch: parseInt(row.querySelector('.special-class-batch').value),
+                    subject: row.querySelector('.special-class-subject').value.trim(),
+                    day: row.querySelector('.special-class-day').value,
+                    slot: parseInt(row.querySelector('.special-class-slot').value)
+                })).filter(s => s.batch && s.subject && s.day && s.slot);
+                
+                // Validate inputs
+                if (subjects.length === 0 || numClassrooms < 1 || numBatches < 1 || maxClassesPerDay < 1) {
+                    showMessage("Please enter valid data for all parameters.", "error");
+                    return;
+                }
+
+                const timetable = {};
+                const facultyAvailability = {};
+                const classroomAvailability = {};
+
+                // Initialize availability trackers
+                for (let i = 1; i <= numBatches; i++) {
+                    timetable[i] = {};
+                    for (const day of days) {
+                        timetable[i][day] = new Array(maxClassesPerDay).fill(null);
+                    }
+                }
+                for (const subject of subjects) {
+                    facultyAvailability[subject.faculty] = facultyAvailability[subject.faculty] || {};
+                    for (const day of days) {
+                        facultyAvailability[subject.faculty][day] = new Array(maxClassesPerDay).fill(true);
+                    }
+                }
+                for (let i = 1; i <= numClassrooms; i++) {
+                    classroomAvailability[i] = {};
+                    for (const day of days) {
+                        classroomAvailability[i][day] = new Array(maxClassesPerDay).fill(true);
+                    }
+                }
+
+                // Place fixed special classes first
+                for (const special of specialClasses) {
+                    const batchKey = special.batch;
+                    const day = special.day;
+                    const slotIndex = special.slot - 1;
+                    if (timetable[batchKey] && timetable[batchKey][day] && timetable[batchKey][day][slotIndex] === null) {
+                        timetable[batchKey][day][slotIndex] = {
+                            subject: special.subject,
+                            faculty: 'Special',
+                            classroom: 'Special'
+                        };
+                    } else {
+                        showMessage(`Warning: Could not place fixed class for Batch ${batchKey} on ${day} at slot ${special.slot}. Slot is already occupied.`, "error");
+                    }
+                }
+
+                // Simplified greedy algorithm to fill the rest
+                for (let i = 1; i <= numBatches; i++) {
+                    const assignedClasses = {};
+                    subjects.forEach(s => assignedClasses[s.name] = 0);
+                    
+                    const availableSubjects = subjects.slice();
+
+                    for (const day of days) {
+                        for (let slotIndex = 0; slotIndex < maxClassesPerDay; slotIndex++) {
+                            if (timetable[i][day][slotIndex] !== null) continue; // Slot is already taken by a special class
+
+                            let assigned = false;
+                            // Find an available subject, faculty, and classroom
+                            for (let sIdx = 0; sIdx < availableSubjects.length; sIdx++) {
+                                const subject = availableSubjects[sIdx];
+                                if (assignedClasses[subject.name] >= subject.classesPerWeek) continue;
+
+                                const faculty = subject.faculty;
+                                if (!facultyAvailability[faculty] || !facultyAvailability[faculty][day][slotIndex]) continue;
+                                
+                                let foundClassroom = null;
+                                for (let c = 1; c <= numClassrooms; c++) {
+                                    if (classroomAvailability[c] && classroomAvailability[c][day][slotIndex]) {
+                                        foundClassroom = c;
+                                        break;
+                                    }
+                                }
+
+                                if (foundClassroom) {
+                                    timetable[i][day][slotIndex] = {
+                                        subject: subject.name,
+                                        faculty: faculty,
+                                        classroom: foundClassroom
+                                    };
+                                    facultyAvailability[faculty][day][slotIndex] = false;
+                                    classroomAvailability[foundClassroom][day][slotIndex] = false;
+                                    assignedClasses[subject.name]++;
+                                    assigned = true;
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                }
+
+                // Render the timetable
+                timetableDisplay.innerHTML = '';
+                timetableDisplay.classList.remove('hidden');
+
+                for (let i = 1; i <= numBatches; i++) {
+                    const batchDiv = document.createElement('div');
+                    batchDiv.className = "mb-8";
+                    batchDiv.innerHTML = `
+                        <h3 class="text-xl font-semibold mb-4 text-gray-700">Batch ${i}</h3>
+                        <div class="overflow-x-auto rounded-lg shadow-lg border border-gray-200">
+                            <table class="min-w-full divide-y divide-gray-200">
+                                <thead class="bg-gray-100">
+                                    <tr>
+                                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider rounded-tl-lg">Time Slot</th>
+                                        ${days.map(day => `<th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">${day}</th>`).join('')}
+                                    </tr>
+                                </thead>
+                                <tbody class="bg-white divide-y divide-gray-200">
+                                    ${Array.from({ length: maxClassesPerDay }, (_, slotIndex) => `
+                                        <tr>
+                                            <td class="px-4 py-3 whitespace-nowrap text-sm font-medium text-gray-900">${slotIndex + 1}</td>
+                                            ${days.map(day => {
+                                                const classInfo = timetable[i][day][slotIndex];
+                                                if (classInfo) {
+                                                    return `
+                                                        <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-500">
+                                                            <div class="font-bold text-gray-800">${classInfo.subject}</div>
+                                                            <div class="text-xs text-gray-500">
+                                                                <span class="font-medium">${classInfo.faculty}</span>, Room ${classInfo.classroom}
+                                                            </div>
+                                                        </td>
+                                                    `;
+                                                } else {
+                                                    return `<td class="px-4 py-3 whitespace-nowrap text-sm text-gray-400 italic">Free</td>`;
+                                                }
+                                            }).join('')}
+                                        </tr>
+                                    `).join('')}
+                                </tbody>
+                            </table>
+                        </div>
+                    `;
+                    timetableDisplay.appendChild(batchDiv);
+                }
+
+                showMessage("Timetable generated successfully!", "success");
+            });
+        });
+    </script>
+</body>
+</html><!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smart Classroom & Timetable Scheduler</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f4f7f9;
+            color: #333;
+        }
+    </style>
+</head>
+<body class="p-4 sm:p-8">
+    <div class="max-w-7xl mx-auto bg-white rounded-3xl shadow-2xl p-6 sm:p-10 mb-8">
+        <header class="text-center mb-10">
+            <h1 class="text-3xl sm:text-5xl font-bold text-gray-800 mb-2">Smart Classroom & Timetable Scheduler</h1>
+            <p class="text-sm sm:text-lg text-gray-500">Generate optimized timetables by defining your resources and constraints.</p>
+        </header>
+
+        <!-- Message Box -->
+        <div id="messageBox" class="fixed top-4 left-1/2 -translate-x-1/2 px-6 py-3 bg-blue-500 text-white text-sm rounded-full shadow-lg transition-all duration-300 ease-in-out z-50 transform scale-0">
+            Generating Timetable...
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <!-- Input Panel -->
+            <div class="bg-gray-50 p-6 rounded-2xl border border-gray-200">
+                <h2 class="text-2xl font-semibold text-gray-700 mb-6">Input Parameters</h2>
+                <div class="space-y-6">
+                    <div>
+                        <label for="numClassrooms" class="block text-sm font-medium text-gray-700 mb-1">Number of Classrooms</label>
+                        <input type="number" id="numClassrooms" value="3" min="1" class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-500 focus:ring-opacity-50">
+                    </div>
+                    <div>
+                        <label for="numBatches" class="block text-sm font-medium text-gray-700 mb-1">Number of Batches of Students</label>
+                        <input type="number" id="numBatches" value="2" min="1" class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-500 focus:ring-opacity-50">
+                    </div>
+                    <div>
+                        <label for="maxClassesPerDay" class="block text-sm font-medium text-gray-700 mb-1">Maximum Classes Per Day</label>
+                        <input type="number" id="maxClassesPerDay" value="6" min="1" class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-500 focus:ring-opacity-50">
+                    </div>
+
+                    <div id="subjectsContainer" class="space-y-4">
+                        <div class="flex items-center space-x-2">
+                            <label class="block text-sm font-medium text-gray-700 flex-grow">Subject Name</label>
+                            <label class="block text-sm font-medium text-gray-700 flex-grow">Classes / Week</label>
+                            <label class="block text-sm font-medium text-gray-700 flex-grow">Faculty Name</label>
+                        </div>
+                        <div class="flex items-center space-x-2 subject-row">
+                            <input type="text" value="Math" placeholder="Subject Name" class="subject-name flex-grow rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-500 focus:ring-opacity-50">
+                            <input type="number" value="5" min="1" class="subject-classes flex-grow rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-500 focus:ring-opacity-50">
+                            <input type="text" value="Dr. Smith" placeholder="Faculty Name" class="subject-faculty flex-grow rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-500 focus:ring-opacity-50">
+                        </div>
+                        <div class="flex items-center space-x-2 subject-row">
+                            <input type="text" value="Physics" placeholder="Subject Name" class="subject-name flex-grow rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-500 focus:ring-opacity-50">
+                            <input type="number" value="4" min="1" class="subject-classes flex-grow rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-500 focus:ring-opacity-50">
+                            <input type="text" value="Dr. Johnson" placeholder="Faculty Name" class="subject-faculty flex-grow rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-500 focus:ring-opacity-50">
+                        </div>
+                    </div>
+                    <button id="addSubjectBtn" class="w-full py-2 px-4 bg-gray-200 text-gray-700 rounded-lg font-medium hover:bg-gray-300 transition-colors">Add Subject</button>
+                    
+                    <div id="specialClassesContainer" class="space-y-4 pt-4">
+                        <h3 class="text-lg font-semibold text-gray-700 mb-2">Special/Fixed Classes</h3>
+                        <div class="flex items-center space-x-2">
+                            <label class="block text-sm font-medium text-gray-700 flex-grow">Batch</label>
+                            <label class="block text-sm font-medium text-gray-700 flex-grow">Subject</label>
+                            <label class="block text-sm font-medium text-gray-700 flex-grow">Day</label>
+                            <label class="block text-sm font-medium text-gray-700 flex-grow">Slot</label>
+                        </div>
+                        <div class="flex items-center space-x-2 special-class-row">
+                            <input type="number" value="1" min="1" class="special-class-batch w-1/4 rounded-md border-gray-300 shadow-sm">
+                            <input type="text" value="Seminar" placeholder="Subject Name" class="special-class-subject w-1/4 rounded-md border-gray-300 shadow-sm">
+                            <select class="special-class-day w-1/4 rounded-md border-gray-300 shadow-sm">
+                                <option value="Monday">Mon</option>
+                                <option value="Tuesday">Tue</option>
+                                <option value="Wednesday">Wed</option>
+                                <option value="Thursday">Thu</option>
+                                <option value="Friday">Fri</option>
+                            </select>
+                            <input type="number" value="3" min="1" class="special-class-slot w-1/4 rounded-md border-gray-300 shadow-sm">
+                        </div>
+                    </div>
+                    <button id="addSpecialClassBtn" class="w-full py-2 px-4 bg-gray-200 text-gray-700 rounded-lg font-medium hover:bg-gray-300 transition-colors">Add Special Class</button>
+                </div>
+                <button id="generateBtn" class="w-full py-3 mt-8 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition-colors shadow-lg">Generate Timetable</button>
+            </div>
+
+            <!-- Timetable Display -->
+            <div id="timetableDisplay" class="bg-gray-50 p-6 rounded-2xl border border-gray-200 hidden">
+                <h2 class="text-2xl font-semibold text-gray-700 mb-6">Generated Timetables</h2>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const numClassroomsInput = document.getElementById('numClassrooms');
+            const numBatchesInput = document.getElementById('numBatches');
+            const maxClassesPerDayInput = document.getElementById('maxClassesPerDay');
+            const subjectsContainer = document.getElementById('subjectsContainer');
+            const addSubjectBtn = document.getElementById('addSubjectBtn');
+            const specialClassesContainer = document.getElementById('specialClassesContainer');
+            const addSpecialClassBtn = document.getElementById('addSpecialClassBtn');
+            const generateBtn = document.getElementById('generateBtn');
+            const timetableDisplay = document.getElementById('timetableDisplay');
+            const messageBox = document.getElementById('messageBox');
+
+            const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
+
+            // Function to show a message box
+            const showMessage = (text, type = 'info') => {
+                messageBox.textContent = text;
+                let bgColor = 'bg-blue-500';
+                if (type === 'error') bgColor = 'bg-red-500';
+                else if (type === 'success') bgColor = 'bg-green-500';
+                
+                messageBox.className = `fixed top-4 left-1/2 -translate-x-1/2 px-6 py-3 text-white text-sm rounded-full shadow-lg transition-all duration-300 ease-in-out z-50 transform scale-100 ${bgColor}`;
+                
+                setTimeout(() => {
+                    messageBox.className = `fixed top-4 left-1/2 -translate-x-1/2 px-6 py-3 text-white text-sm rounded-full shadow-lg transition-all duration-300 ease-in-out z-50 transform scale-0`;
+                }, 3000);
+            };
+
+            // Add a new subject row
+            addSubjectBtn.addEventListener('click', () => {
+                const newRow = document.createElement('div');
+                newRow.className = "flex items-center space-x-2 subject-row";
+                newRow.innerHTML = `
+                    <input type="text" placeholder="Subject Name" class="subject-name flex-grow rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-500 focus:ring-opacity-50">
+                    <input type="number" min="1" value="3" class="subject-classes flex-grow rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-500 focus:ring-opacity-50">
+                    <input type="text" placeholder="Faculty Name" class="subject-faculty flex-grow rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-500 focus:ring-opacity-50">
+                    <button class="remove-btn bg-red-500 text-white rounded-full h-6 w-6 flex items-center justify-center text-xs p-1">X</button>
+                `;
+                subjectsContainer.appendChild(newRow);
+                newRow.querySelector('.remove-btn').addEventListener('click', () => newRow.remove());
+            });
+
+            // Add a new special class row
+            addSpecialClassBtn.addEventListener('click', () => {
+                const newRow = document.createElement('div');
+                newRow.className = "flex items-center space-x-2 special-class-row";
+                newRow.innerHTML = `
+                    <input type="number" value="1" min="1" class="special-class-batch w-1/4 rounded-md border-gray-300 shadow-sm">
+                    <input type="text" placeholder="Subject Name" class="special-class-subject w-1/4 rounded-md border-gray-300 shadow-sm">
+                    <select class="special-class-day w-1/4 rounded-md border-gray-300 shadow-sm">
+                        <option value="Monday">Mon</option>
+                        <option value="Tuesday">Tue</option>
+                        <option value="Wednesday">Wed</option>
+                        <option value="Thursday">Thu</option>
+                        <option value="Friday">Fri</option>
+                    </select>
+                    <input type="number" value="1" min="1" class="special-class-slot w-1/4 rounded-md border-gray-300 shadow-sm">
+                    <button class="remove-btn bg-red-500 text-white rounded-full h-6 w-6 flex items-center justify-center text-xs p-1">X</button>
+                `;
+                specialClassesContainer.appendChild(newRow);
+                newRow.querySelector('.remove-btn').addEventListener('click', () => newRow.remove());
+            });
+
+            // Timetable generation logic
+            generateBtn.addEventListener('click', () => {
+                showMessage("Generating Timetable...", "info");
+                
+                // Get all inputs
+                const numClassrooms = parseInt(numClassroomsInput.value);
+                const numBatches = parseInt(numBatchesInput.value);
+                const maxClassesPerDay = parseInt(maxClassesPerDayInput.value);
+                const subjects = Array.from(subjectsContainer.querySelectorAll('.subject-row')).map(row => ({
+                    name: row.querySelector('.subject-name').value.trim(),
+                    classesPerWeek: parseInt(row.querySelector('.subject-classes').value),
+                    faculty: row.querySelector('.subject-faculty').value.trim()
+                })).filter(s => s.name && !isNaN(s.classesPerWeek) && s.faculty);
+
+                const specialClasses = Array.from(specialClassesContainer.querySelectorAll('.special-class-row')).map(row => ({
+                    batch: parseInt(row.querySelector('.special-class-batch').value),
+                    subject: row.querySelector('.special-class-subject').value.trim(),
+                    day: row.querySelector('.special-class-day').value,
+                    slot: parseInt(row.querySelector('.special-class-slot').value)
+                })).filter(s => s.batch && s.subject && s.day && s.slot);
+                
+                // Validate inputs
+                if (subjects.length === 0 || numClassrooms < 1 || numBatches < 1 || maxClassesPerDay < 1) {
+                    showMessage("Please enter valid data for all parameters.", "error");
+                    return;
+                }
+
+                const timetable = {};
+                const facultyAvailability = {};
+                const classroomAvailability = {};
+
+                // Initialize availability trackers
+                for (let i = 1; i <= numBatches; i++) {
+                    timetable[i] = {};
+                    for (const day of days) {
+                        timetable[i][day] = new Array(maxClassesPerDay).fill(null);
+                    }
+                }
+                for (const subject of subjects) {
+                    facultyAvailability[subject.faculty] = facultyAvailability[subject.faculty] || {};
+                    for (const day of days) {
+                        facultyAvailability[subject.faculty][day] = new Array(maxClassesPerDay).fill(true);
+                    }
+                }
+                for (let i = 1; i <= numClassrooms; i++) {
+                    classroomAvailability[i] = {};
+                    for (const day of days) {
+                        classroomAvailability[i][day] = new Array(maxClassesPerDay).fill(true);
+                    }
+                }
+
+                // Place fixed special classes first
+                for (const special of specialClasses) {
+                    const batchKey = special.batch;
+                    const day = special.day;
+                    const slotIndex = special.slot - 1;
+                    if (timetable[batchKey] && timetable[batchKey][day] && timetable[batchKey][day][slotIndex] === null) {
+                        timetable[batchKey][day][slotIndex] = {
+                            subject: special.subject,
+                            faculty: 'Special',
+                            classroom: 'Special'
+                        };
+                    } else {
+                        showMessage(`Warning: Could not place fixed class for Batch ${batchKey} on ${day} at slot ${special.slot}. Slot is already occupied.`, "error");
+                    }
+                }
+
+                // Simplified greedy algorithm to fill the rest
+                for (let i = 1; i <= numBatches; i++) {
+                    const assignedClasses = {};
+                    subjects.forEach(s => assignedClasses[s.name] = 0);
+                    
+                    const availableSubjects = subjects.slice();
+
+                    for (const day of days) {
+                        for (let slotIndex = 0; slotIndex < maxClassesPerDay; slotIndex++) {
+                            if (timetable[i][day][slotIndex] !== null) continue; // Slot is already taken by a special class
+
+                            let assigned = false;
+                            // Find an available subject, faculty, and classroom
+                            for (let sIdx = 0; sIdx < availableSubjects.length; sIdx++) {
+                                const subject = availableSubjects[sIdx];
+                                if (assignedClasses[subject.name] >= subject.classesPerWeek) continue;
+
+                                const faculty = subject.faculty;
+                                if (!facultyAvailability[faculty] || !facultyAvailability[faculty][day][slotIndex]) continue;
+                                
+                                let foundClassroom = null;
+                                for (let c = 1; c <= numClassrooms; c++) {
+                                    if (classroomAvailability[c] && classroomAvailability[c][day][slotIndex]) {
+                                        foundClassroom = c;
+                                        break;
+                                    }
+                                }
+
+                                if (foundClassroom) {
+                                    timetable[i][day][slotIndex] = {
+                                        subject: subject.name,
+                                        faculty: faculty,
+                                        classroom: foundClassroom
+                                    };
+                                    facultyAvailability[faculty][day][slotIndex] = false;
+                                    classroomAvailability[foundClassroom][day][slotIndex] = false;
+                                    assignedClasses[subject.name]++;
+                                    assigned = true;
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                }
+
+                // Render the timetable
+                timetableDisplay.innerHTML = '';
+                timetableDisplay.classList.remove('hidden');
+
+                for (let i = 1; i <= numBatches; i++) {
+                    const batchDiv = document.createElement('div');
+                    batchDiv.className = "mb-8";
+                    batchDiv.innerHTML = `
+                        <h3 class="text-xl font-semibold mb-4 text-gray-700">Batch ${i}</h3>
+                        <div class="overflow-x-auto rounded-lg shadow-lg border border-gray-200">
+                            <table class="min-w-full divide-y divide-gray-200">
+                                <thead class="bg-gray-100">
+                                    <tr>
+                                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider rounded-tl-lg">Time Slot</th>
+                                        ${days.map(day => `<th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">${day}</th>`).join('')}
+                                    </tr>
+                                </thead>
+                                <tbody class="bg-white divide-y divide-gray-200">
+                                    ${Array.from({ length: maxClassesPerDay }, (_, slotIndex) => `
+                                        <tr>
+                                            <td class="px-4 py-3 whitespace-nowrap text-sm font-medium text-gray-900">${slotIndex + 1}</td>
+                                            ${days.map(day => {
+                                                const classInfo = timetable[i][day][slotIndex];
+                                                if (classInfo) {
+                                                    return `
+                                                        <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-500">
+                                                            <div class="font-bold text-gray-800">${classInfo.subject}</div>
+                                                            <div class="text-xs text-gray-500">
+                                                                <span class="font-medium">${classInfo.faculty}</span>, Room ${classInfo.classroom}
+                                                            </div>
+                                                        </td>
+                                                    `;
+                                                } else {
+                                                    return `<td class="px-4 py-3 whitespace-nowrap text-sm text-gray-400 italic">Free</td>`;
+                                                }
+                                            }).join('')}
+                                        </tr>
+                                    `).join('')}
+                                </tbody>
+                            </table>
+                        </div>
+                    `;
+                    timetableDisplay.appendChild(batchDiv);
+                }
+
+                showMessage("Timetable generated successfully!", "success");
+            });
+        });
+    </script>
+</body>
+</html>
