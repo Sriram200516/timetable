@@ -85,11 +85,11 @@
 
         <!-- Timetable Display Section -->
         <section id="timetable-section" class="card bg-white rounded-lg p-6 space-y-4 hidden animate-fade-in">
-            <h2 class="text-2xl font-semibold text-gray-700 text-center">Generated Timetable</h2>
+            <h2 class="text-2xl font-semibold text-black text-center">Generated Timetable</h2>
             <div id="timetable-output" class="overflow-x-auto">
                 <!-- Timetable will be generated here by JavaScript -->
             </div>
-            <button id="download-pdf-btn" class="w-full mt-4 py-3 px-4 rounded-md bg-red-500 text-white font-semibold hover:bg-red-600 transition">Download as PDF</button>
+            <button id="download-png-btn" class="w-full mt-4 py-3 px-4 rounded-md bg-red-500 text-white font-semibold hover:bg-red-600 transition">Download as PNG</button>
         </section>
 
         <!-- Message Box -->
@@ -102,12 +102,12 @@
 
     </div>
 
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.9.3/html2pdf.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/dom-to-image@2.6.0/dist/dom-to-image.min.js"></script>
     <script>
         document.addEventListener('DOMContentLoaded', () => {
             const addSubjectBtn = document.getElementById('add-subject');
             const generateBtn = document.getElementById('generate-btn');
-            const downloadPdfBtn = document.getElementById('download-pdf-btn');
+            const downloadPngBtn = document.getElementById('download-png-btn');
             const subjectInputs = document.getElementById('subject-inputs');
             const timetableSection = document.getElementById('timetable-section');
             const timetableOutput = document.getElementById('timetable-output');
@@ -179,29 +179,29 @@
 
                 let timetableHTML = '';
                 batches.forEach(batch => {
-                    timetableHTML += `<h3 class="text-xl font-semibold mt-6 mb-2">${batch}</h3>`;
+                    timetableHTML += `<h3 class="text-xl font-semibold mt-6 mb-2 text-black">${batch}</h3>`;
                     timetableHTML += `<table class="min-w-full bg-white rounded-lg shadow-sm overflow-hidden">`;
-                    timetableHTML += `<thead><tr class="bg-gray-200"><th class="px-4 py-2">Time Slot</th>`;
+                    timetableHTML += `<thead><tr class="bg-gray-200"><th class="px-4 py-2 text-black">Time Slot</th>`;
                     days.forEach(day => {
-                        timetableHTML += `<th class="px-4 py-2">${day}</th>`;
+                        timetableHTML += `<th class="px-4 py-2 text-black">${day}</th>`;
                     });
                     timetableHTML += `</tr></thead><tbody>`;
 
                     let subjectIndex = 0;
                     timeSlots.forEach(slot => {
-                        timetableHTML += `<tr><td class="px-4 py-2 font-medium">${slot}</td>`;
+                        timetableHTML += `<tr><td class="px-4 py-2 font-medium text-black">${slot}</td>`;
                         days.forEach(() => {
                             if (subjectIndex < subjects.length) {
                                 const subject = subjects[subjectIndex];
                                 const classroom = classrooms[subjectIndex % numClassrooms];
                                 timetableHTML += `<td class="px-4 py-2 text-center text-sm">
-                                    <div class="font-semibold">${subject.name}</div>
-                                    <div class="text-xs text-gray-500">${subject.faculty}</div>
-                                    <div class="text-xs text-gray-500">${classroom}</div>
+                                    <div class="font-semibold text-black">${subject.name}</div>
+                                    <div class="text-xs text-black">${subject.faculty}</div>
+                                    <div class="text-xs text-black">${classroom}</div>
                                 </td>`;
                                 subjectIndex++;
                             } else {
-                                timetableHTML += `<td class="px-4 py-2 text-center text-sm text-gray-400">Free</td>`;
+                                timetableHTML += `<td class="px-4 py-2 text-center text-sm text-black">Free</td>`;
                             }
                         });
                         timetableHTML += `</tr>`;
@@ -214,16 +214,21 @@
                 timetableSection.scrollIntoView({ behavior: 'smooth' });
             });
 
-            downloadPdfBtn.addEventListener('click', () => {
+            downloadPngBtn.addEventListener('click', () => {
                 const element = document.getElementById('timetable-section');
-                const opt = {
-                    margin: 1,
-                    filename: 'timetable.pdf',
-                    image: { type: 'jpeg', quality: 0.98 },
-                    html2canvas: { scale: 2 },
-                    jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' }
-                };
-                html2pdf().from(element).set(opt).save();
+                domtoimage.toPng(element)
+                    .then(function (dataUrl) {
+                        const link = document.createElement('a');
+                        link.download = 'timetable.png';
+                        link.href = dataUrl;
+                        document.body.appendChild(link);
+                        link.click();
+                        document.body.removeChild(link);
+                    })
+                    .catch(function (error) {
+                        console.error('Error converting HTML to PNG:', error);
+                        showMessage('Failed to download the timetable as a PNG.');
+                    });
             });
         });
     </script>
