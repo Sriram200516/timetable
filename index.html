@@ -120,6 +120,24 @@
                 messageBox.classList.remove('hidden');
             }
 
+            // Function to shuffle an array randomly (Fisher-Yates shuffle algorithm)
+            function shuffle(array) {
+                let currentIndex = array.length,  randomIndex;
+
+                // While there are elements remaining to shuffle
+                while (currentIndex > 0) {
+                    // Pick a remaining element
+                    randomIndex = Math.floor(Math.random() * currentIndex);
+                    currentIndex--;
+
+                    // And swap it with the current element
+                    [array[currentIndex], array[randomIndex]] = [
+                    array[randomIndex], array[currentIndex]];
+                }
+
+                return array;
+            }
+
             messageCloseBtn.addEventListener('click', () => {
                 messageBox.classList.add('hidden');
             });
@@ -170,8 +188,12 @@
                     showMessage("Please add at least one subject with valid details.");
                     return;
                 }
+                
+                // --- KEY CHANGE ---
+                // Shuffle the subjects array to randomize their placement in the timetable
+                shuffle(subjects);
 
-                // Simple Timetable Generation Algorithm (for demonstration purposes)
+                // Timetable Generation Algorithm
                 const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
                 const timeSlots = Array.from({ length: maxClassesPerDay }, (_, i) => `Slot ${i + 1}`);
                 const batches = Array.from({ length: numBatches }, (_, i) => `Batch ${i + 1}`);
